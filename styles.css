@@ -272,6 +272,13 @@ body {
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
     resize: both;
     overflow: hidden;
+    display: none; /* Default state is hidden */
+    will-change: transform; /* Optimize for animations */
+}
+
+.window:not([hidden]) {
+    display: flex;
+    flex-direction: column;
 }
 
 .window-header {
@@ -284,19 +291,19 @@ body {
     cursor: move;
     user-select: none;
     font-weight: bold;
+    min-height: 24px;
+    flex-shrink: 0;
+    touch-action: none; /* Prevent default touch actions */
 }
 
 .window-controls {
     display: flex;
     gap: 2px;
+    z-index: 10;
 }
 
 .minimize-btn,
 .close-btn {
-    background: #c0c0c0;
-    border: 2px solid #dfdfdf;
-    border-right-color: #000;
-    border-bottom-color: #000;
     width: 16px;
     height: 14px;
     font-size: 12px;
@@ -306,12 +313,13 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0;
-}
-
-.minimize-btn {
-    font-size: 10px;
-    line-height: 8px;
-    padding-bottom: 4px;
+    background: #c0c0c0;
+    border: 2px solid #dfdfdf;
+    border-right-color: #000;
+    border-bottom-color: #000;
+    color: #000;
+    position: relative;
+    z-index: 11;
 }
 
 .minimize-btn:active,
@@ -319,17 +327,15 @@ body {
     border: 2px solid #000;
     border-right-color: #dfdfdf;
     border-bottom-color: #dfdfdf;
+    padding: 1px 0 0 1px;
 }
 
 .window-content {
-    position: absolute;
-    top: 24px;
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
+    flex: 1; /* Take remaining space */
     background: #c0c0c0;
     overflow: auto;
     padding: 8px;
+    position: relative;
 }
 
 .window-content h2 {
@@ -754,107 +760,67 @@ body {
     height: 16px;
 }
 
-/* Mobile-friendly styles */
+/* Mobile-specific window styles */
 @media screen and (max-width: 768px) {
-    /* General adjustments */
-    * {
-        font-size: 14px; /* Slightly larger font for readability */
-    }
-
-    /* Landing page */
-    #landing-page {
-        padding: 20px;
-    }
-
-    #whats-this-btn {
-        padding: 20px 40px;
-        font-size: 16px;
-        width: 80%;
-        max-width: 300px;
-    }
-
-    #skip-btn {
-        padding: 15px 30px;
-        font-size: 14px;
-        width: 60%;
-        max-width: 200px;
-    }
-
-    #whats-this-btn:active,
-    #skip-btn:active {
-        border: 2px solid #000;
-        border-right-color: #dfdfdf;
-        border-bottom-color: #dfdfdf;
-    }
-
-    /* Desktop icons */
-    .desktop-icons {
-        grid-template-columns: repeat(2, 1fr);
-        padding: 20px;
-        gap: 20px;
-    }
-
-    .icon {
-        width: 100%;
-    }
-
-    .icon img {
-        width: 48px;
-        height: 48px;
-    }
-
-    /* Windows */
     .window {
-        width: 90% !important;
-        height: 80% !important;
-        max-height: 80vh;
-        min-width: unset;
-        top: 10% !important;
-        left: 5% !important;
-        transform: none !important;
-        position: fixed;
-        transition: transform 0.1s ease;
-        touch-action: none; /* Prevent browser handling of touch events */
+        position: fixed !important;
+        min-width: unset !important;
+        width: 95vw !important;
+        height: 80vh !important;
+        max-height: calc(100vh - 60px) !important;
+        resize: none !important;
+        will-change: transform, left, top !important;
+        touch-action: none !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
-    .window.dragging {
-        transition: none;
+    .window-header {
+        min-height: 44px !important;
+        padding: 8px 12px !important;
+        cursor: move !important;
+        touch-action: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
     }
 
     .window-content {
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 15px !important;
+        position: relative !important;
+        touch-action: pan-y !important; /* Allow vertical scrolling */
     }
 
-    /* Taskbar */
+    /* Prevent text selection during drag */
+    .window.dragging * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+    }
+
+    /* Taskbar adjustments */
     .taskbar {
         height: 50px;
-    }
-
-    #start-btn {
-        height: 46px;
-        padding: 0 15px;
+        padding: 5px;
     }
 
     .taskbar-tabs {
-        height: 46px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        height: 42px;
     }
 
     .taskbar-tab {
-        min-width: 120px;
-        padding: 0 12px;
-        font-size: 12px;
-        touch-action: none;
-        transition: transform 0.1s ease;
+        height: 42px;
+        min-width: 140px;
+        font-size: 13px;
     }
 
-    .taskbar-tab.dragging {
-        opacity: 0.8;
-        background: #d4d4d4;
-        position: relative;
-        z-index: 1000;
-        transform: scale(1.02);
+    /* Start menu positioning */
+    .start-menu {
+        bottom: 50px;
+        left: 0;
+        width: 250px;
+        max-height: calc(100vh - 50px);
+        overflow-y: auto;
     }
 
     /* Active states for touch */
@@ -890,12 +856,6 @@ body {
     }
 
     /* Start menu */
-    .start-menu {
-        width: 80%;
-        max-width: 300px;
-        bottom: 50px;
-    }
-
     .start-menu-item {
         padding: 12px;
     }
@@ -925,18 +885,6 @@ body {
     .project-list li {
         margin: 10px 0;
         padding: 15px;
-    }
-
-    /* Contact list */
-    .contact-list dt {
-        float: none;
-        width: 100%;
-        margin-bottom: 5px;
-    }
-
-    .contact-list dd {
-        margin-left: 0;
-        margin-bottom: 15px;
     }
 
     /* Settings */
@@ -970,15 +918,40 @@ body {
 
 /* Additional adjustments for very small screens */
 @media screen and (max-width: 480px) {
+    .window {
+        width: 98vw !important;
+        height: 85vh !important;
+    }
+
+    .window-header {
+        padding: 8px !important;
+    }
+
+    .minimize-btn,
+    .close-btn {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        font-size: 16px !important;
+    }
+
+    .window-content {
+        padding: 12px !important;
+    }
+
     .desktop-icons {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
         padding: 10px;
     }
 
-    .window {
-        width: 95% !important;
-        left: 2.5% !important;
+    .contact-list dt {
+        font-size: 14px;
+    }
+
+    .contact-list dd {
+        font-size: 13px;
     }
 
     .start-menu {
@@ -989,8 +962,8 @@ body {
 /* Ensure content is accessible when keyboard is open on mobile */
 @media screen and (max-height: 600px) {
     .window {
-        height: 70% !important;
-        top: 5% !important;
+        height: 70vh !important;
+        max-height: calc(100vh - 80px) !important;
     }
 }
 
@@ -1002,4 +975,15 @@ body {
     width: 100%;
     max-width: 600px;
     padding: 20px;
+}
+
+/* Prevent iOS double-tap zoom */
+* {
+    touch-action: manipulation;
+}
+
+/* Improve window focus visibility */
+.window:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 2px #000080;
 } 

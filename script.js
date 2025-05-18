@@ -8,6 +8,28 @@ const screens = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Force all windows to be hidden on startup and reset their state
+    document.querySelectorAll('.window').forEach(window => {
+        window.hidden = true;
+        window.style.display = 'none';
+        window.style.zIndex = '1';
+        
+        // Reset position for mobile
+        if (isMobile) {
+            window.style.transform = 'translate(-50%, -50%)';
+            window.style.top = '50%';
+            window.style.left = '50%';
+            window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
+            window.style.height = '80vh';
+        }
+    });
+
+    // Clear any existing taskbar tabs
+    const taskbarTabs = document.querySelector('.taskbar-tabs');
+    taskbarTabs.innerHTML = '';
+
     updateClock();
     setInterval(updateClock, 1000);
     setupWindowDragging();
@@ -21,6 +43,65 @@ document.addEventListener('DOMContentLoaded', () => {
             window.classList.add('rainbow-border');
         });
     }
+
+    // Add click handlers for desktop icons
+    document.querySelectorAll('.icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+            const windowId = icon.getAttribute('data-window');
+            const window = document.getElementById(`${windowId}-window`);
+            
+            if (window) {
+                window.hidden = false;
+                window.style.display = 'flex';
+                
+                if (isMobile) {
+                    // Ensure proper positioning on mobile
+                    window.style.transform = 'translate(-50%, -50%)';
+                    window.style.top = '50%';
+                    window.style.left = '50%';
+                }
+                
+                // Create or update taskbar tab
+                const existingTab = taskbarTabs.querySelector(`[data-window="${windowId}-window"]`);
+                if (!existingTab) {
+                    const tab = createTaskbarTab(
+                        `${windowId}-window`,
+                        icon.querySelector('span').textContent,
+                        icon.querySelector('img').src
+                    );
+                    taskbarTabs.appendChild(tab);
+                }
+                
+                // Activate tab
+                document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active'));
+                taskbarTabs.querySelector(`[data-window="${windowId}-window"]`).classList.add('active');
+                
+                // Bring window to front
+                const highestZ = Math.max(...Array.from(document.querySelectorAll('.window'))
+                    .map(w => parseInt(w.style.zIndex) || 1));
+                window.style.zIndex = String(highestZ + 1);
+            }
+        });
+    });
+
+    // Handle orientation change on mobile
+    if (isMobile) {
+        window.addEventListener('orientationchange', () => {
+            document.querySelectorAll('.window').forEach(window => {
+                if (!window.hidden) {
+                    // Recenter window
+                    window.style.transform = 'translate(-50%, -50%)';
+                    window.style.top = '50%';
+                    window.style.left = '50%';
+                    window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
+                    window.style.height = '80vh';
+                }
+            });
+        });
+    }
+
+    // Setup window controls
+    setupWindowControls();
 });
 
 // What's this button click handler
@@ -85,6 +166,8 @@ function updateClock() {
 // Window management
 function setupWindowDragging() {
     const windows = document.querySelectorAll('.window');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let highestZIndex = 2;
     
     windows.forEach(win => {
         const header = win.querySelector('.window-header');
@@ -96,109 +179,121 @@ function setupWindowDragging() {
         let xOffset = 0;
         let yOffset = 0;
 
-        // Set initial position and size for desktop
-        if (!win.style.transform && window.innerWidth > 768) {
+        // Set initial position and size for desktop only
+        if (!win.style.transform && !isMobile && window.innerWidth > 768) {
             win.style.transform = 'translate3d(50px, 50px, 0)';
             win.style.width = '400px';
             win.style.height = '300px';
         }
 
-        function handleTouchStart(e) {
-            const touch = e.touches[0];
+        function handleDragStart(e) {
+            if (e.target.closest('.minimize-btn') || e.target.closest('.close-btn')) {
+                return;
+            }
+
             const rect = win.getBoundingClientRect();
             
-            // Get the current position from transform or use current position
-            const transform = win.style.transform.match(/translate3d\((-?\d+)px,\s*(-?\d+)px/);
-            xOffset = transform ? parseInt(transform[1]) : rect.left;
-            yOffset = transform ? parseInt(transform[2]) : rect.top;
-            
-            initialX = touch.clientX - xOffset;
-            initialY = touch.clientY - yOffset;
+            if (isMobile) {
+                if (!e.touches) return;
+                const touch = e.touches[0];
+                initialX = touch.clientX - rect.left;
+                initialY = touch.clientY - rect.top;
+            } else {
+                initialX = e.clientX - rect.left;
+                initialY = e.clientY - rect.top;
+            }
 
             if (e.target.closest('.window-header')) {
                 isDragging = true;
                 win.style.transition = 'none';
+                
+                // Bring window to front
+                win.style.zIndex = String(++highestZIndex);
             }
         }
 
-        function handleTouchMove(e) {
+        function handleDragMove(e) {
             if (!isDragging) return;
             
             e.preventDefault();
-            const touch = e.touches[0];
             
-            currentX = touch.clientX - initialX;
-            currentY = touch.clientY - initialY;
+            let clientX, clientY;
+            if (isMobile) {
+                if (!e.touches) return;
+                const touch = e.touches[0];
+                clientX = touch.clientX;
+                clientY = touch.clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
 
-            setTranslate(currentX, currentY, win);
+            // Calculate new position
+            let newX = clientX - initialX;
+            let newY = clientY - initialY;
+
+            // Constrain to viewport bounds
+            const rect = win.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width;
+            const maxY = window.innerHeight - rect.height - 50; // Account for taskbar
+
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            // Update position
+            if (isMobile) {
+                win.style.transform = '';
+                win.style.left = `${newX}px`;
+                win.style.top = `${newY}px`;
+            } else {
+                win.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+            }
+
+            xOffset = newX;
+            yOffset = newY;
         }
 
-        function handleTouchEnd() {
+        function handleDragEnd() {
             isDragging = false;
             win.style.transition = '';
         }
 
-        function setTranslate(xPos, yPos, el) {
-            // Ensure window stays within viewport bounds
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const rect = el.getBoundingClientRect();
-
-            // Constrain X position
-            xPos = Math.max(0, Math.min(xPos, windowWidth - rect.width));
+        // Add touch events for mobile
+        if (isMobile) {
+            header.addEventListener('touchstart', handleDragStart, { passive: false });
+            document.addEventListener('touchmove', handleDragMove, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
             
-            // Constrain Y position (account for taskbar)
-            yPos = Math.max(0, Math.min(yPos, windowHeight - rect.height - 50));
-
-            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
-        }
-
-        // Add touch events
-        header.addEventListener('touchstart', handleTouchStart, { passive: false });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd);
-
-        // Keep mouse events for desktop
-        header.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        function dragStart(e) {
-            initialX = e.clientX - xOffset;
-            initialY = e.clientY - yOffset;
-
-            if (e.target.closest('.window-header')) {
-                isDragging = true;
+            // Center window on open if not already positioned
+            if (!win.style.left && !win.style.top) {
+                win.style.left = '50%';
+                win.style.top = '50%';
+                win.style.transform = 'translate(-50%, -50%)';
             }
         }
-
-        function drag(e) {
-            if (isDragging) {
-                e.preventDefault();
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
-
-                xOffset = currentX;
-                yOffset = currentY;
-
-                setTranslate(currentX, currentY, win);
-            }
-        }
-
-        function dragEnd() {
-            isDragging = false;
+        
+        // Add mouse events for desktop
+        if (!isMobile) {
+            header.addEventListener('mousedown', handleDragStart);
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('mouseup', handleDragEnd);
         }
 
         // Handle window focus
-        win.addEventListener('touchstart', focusWindow);
-        win.addEventListener('mousedown', focusWindow);
-
-        function focusWindow() {
-            document.querySelectorAll('.window').forEach(w => {
-                w.style.zIndex = '1';
+        win.addEventListener(isMobile ? 'touchstart' : 'mousedown', () => {
+            // Bring window to front
+            win.style.zIndex = String(++highestZIndex);
+            
+            // Activate taskbar tab
+            const windowId = win.id;
+            document.querySelectorAll('.taskbar-tab').forEach(tab => {
+                tab.classList.remove('active');
             });
-            win.style.zIndex = '2';
-        }
+            const tab = document.querySelector(`.taskbar-tab[data-window="${windowId}"]`);
+            if (tab) {
+                tab.classList.add('active');
+            }
+        });
     });
 }
 
@@ -382,88 +477,71 @@ function getDragAfterElement(container, x) {
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-// Update desktop icon click handlers
-document.querySelectorAll('.icon').forEach(icon => {
-    icon.addEventListener('click', () => {
-        const windowId = icon.getAttribute('data-window');
-        const window = document.getElementById(`${windowId}-window`);
-        const existingTab = taskbarTabs.querySelector(`[data-window="${windowId}-window"]`);
-        
-        if (!existingTab) {
-            // Create new tab if it doesn't exist
-            const tab = createTaskbarTab(
-                `${windowId}-window`,
-                icon.querySelector('span').textContent,
-                icon.querySelector('img').src
-            );
-            taskbarTabs.appendChild(tab);
-        }
-        
-        // Show window and activate tab
-        window.hidden = false;
-        document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active'));
-        taskbarTabs.querySelector(`[data-window="${windowId}-window"]`).classList.add('active');
-        
-        // Bring window to front
-        document.querySelectorAll('.window').forEach(w => {
-            w.style.zIndex = '1';
-        });
-        window.style.zIndex = '2';
-        
-        if (!window.style.transform) {
-            window.style.transform = 'translate3d(50px, 50px, 0)';
-        }
-    });
-});
+// Update window close handlers
+function setupWindowControls() {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-// Update window close and minimize handlers
-document.querySelectorAll('.close-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const window = btn.closest('.window');
-        const windowId = window.id;
-        const tab = taskbarTabs.querySelector(`[data-window="${windowId}"]`);
-        
-        window.hidden = true;
-        if (tab) {
-            tab.remove();
-        }
-    });
-});
+    document.querySelectorAll('.window').forEach(window => {
+        const closeBtn = window.querySelector('.close-btn');
+        const minimizeBtn = window.querySelector('.minimize-btn');
 
-document.querySelectorAll('.minimize-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const window = btn.closest('.window');
-        const windowId = window.id;
-        const tab = taskbarTabs.querySelector(`[data-window="${windowId}"]`);
-        
-        window.hidden = true;
-        if (tab) {
-            tab.classList.remove('active');
-        }
-    });
-});
+        if (closeBtn) {
+            // Remove any existing listeners
+            closeBtn.replaceWith(closeBtn.cloneNode(true));
+            const newCloseBtn = window.querySelector('.close-btn');
+            
+            // Add both click and touch handlers
+            const closeHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.hidden = true;
+                window.style.display = 'none';
+                
+                // Remove taskbar tab
+                const windowId = window.id;
+                const tab = document.querySelector(`.taskbar-tab[data-window="${windowId}"]`);
+                if (tab) {
+                    tab.remove();
+                }
 
-// Update window focus handling
-document.querySelectorAll('.window').forEach(window => {
-    window.addEventListener('mousedown', () => {
-        // Deactivate all tabs
-        document.querySelectorAll('.taskbar-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        // Activate the tab for this window
-        const tab = taskbarTabs.querySelector(`[data-window="${window.id}"]`);
-        if (tab) {
-            tab.classList.add('active');
+                // If this is the settings window, also uncheck the settings menu item
+                if (windowId === 'settings-window') {
+                    const settingsMenuItem = document.querySelector('.start-menu-item:nth-child(3)');
+                    if (settingsMenuItem) {
+                        settingsMenuItem.classList.remove('active');
+                    }
+                }
+            };
+
+            newCloseBtn.addEventListener('click', closeHandler);
+            newCloseBtn.addEventListener('touchend', closeHandler);
         }
-        
-        // Bring window to front
-        document.querySelectorAll('.window').forEach(w => {
-            w.style.zIndex = '1';
-        });
-        window.style.zIndex = '2';
+
+        if (minimizeBtn) {
+            // Remove any existing listeners
+            minimizeBtn.replaceWith(minimizeBtn.cloneNode(true));
+            const newMinimizeBtn = window.querySelector('.minimize-btn');
+            
+            // Add both click and touch handlers
+            const minimizeHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.hidden = true;
+                window.style.display = 'none';
+                
+                // Update taskbar tab state
+                const windowId = window.id;
+                const tab = document.querySelector(`.taskbar-tab[data-window="${windowId}"]`);
+                if (tab) {
+                    tab.classList.remove('active');
+                }
+            };
+
+            newMinimizeBtn.addEventListener('click', minimizeHandler);
+            newMinimizeBtn.addEventListener('touchend', minimizeHandler);
+        }
     });
-});
+}
 
 // Start menu functionality
 const startBtn = document.getElementById('start-btn');
@@ -591,8 +669,20 @@ settingsMenuItem.addEventListener('click', () => {
     startBtn.classList.remove('active');
     startMenu.classList.remove('active');
     
+    const settingsWindow = document.getElementById('settings-window');
+    
     // Show settings window
     settingsWindow.hidden = false;
+    settingsWindow.style.display = 'flex';
+    
+    // Ensure proper mobile positioning
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        settingsWindow.style.transform = 'translate(-50%, -50%)';
+        settingsWindow.style.top = '50%';
+        settingsWindow.style.left = '50%';
+        settingsWindow.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
+        settingsWindow.style.height = '80vh';
+    }
     
     // Create taskbar tab if it doesn't exist
     const existingTab = taskbarTabs.querySelector('[data-window="settings-window"]');
@@ -611,14 +701,9 @@ settingsMenuItem.addEventListener('click', () => {
     tab.classList.add('active');
     
     // Bring window to front
-    document.querySelectorAll('.window').forEach(w => {
-        w.style.zIndex = '1';
-    });
-    settingsWindow.style.zIndex = '2';
-    
-    if (!settingsWindow.style.transform) {
-        settingsWindow.style.transform = 'translate3d(50px, 50px, 0)';
-    }
+    const highestZ = Math.max(...Array.from(document.querySelectorAll('.window'))
+        .map(w => parseInt(w.style.zIndex) || 1));
+    settingsWindow.style.zIndex = String(highestZ + 1);
 });
 
 // Handle rainbow border toggle
