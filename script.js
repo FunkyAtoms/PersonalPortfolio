@@ -743,4 +743,75 @@ function centerWindow(window) {
         window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
         window.style.height = window.innerHeight <= 600 ? '70vh' : '80vh';
     }
+}
+
+// Handle Programs menu touch events
+const programsMenuItem = document.getElementById('programs-menu-item');
+
+if (programsMenuItem) {
+    let touchTimeout;
+    
+    programsMenuItem.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        programsMenuItem.classList.add('touch-active');
+        
+        // Clear any existing timeout
+        if (touchTimeout) {
+            clearTimeout(touchTimeout);
+        }
+        
+        // Set a timeout to remove the active class
+        touchTimeout = setTimeout(() => {
+            programsMenuItem.classList.remove('touch-active');
+        }, 3000); // Menu stays visible for 3 seconds
+    });
+
+    // Handle touch move to prevent accidental menu closure
+    programsMenuItem.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        const submenu = programsMenuItem.querySelector('.submenu');
+        
+        if (submenu) {
+            const menuRect = submenu.getBoundingClientRect();
+            if (touch.clientX >= menuRect.left && touch.clientX <= menuRect.right &&
+                touch.clientY >= menuRect.top && touch.clientY <= menuRect.bottom) {
+                // Keep menu open if touch is within submenu bounds
+                if (touchTimeout) {
+                    clearTimeout(touchTimeout);
+                }
+            }
+        }
+    });
+
+    // Handle submenu item touches
+    const submenuItems = programsMenuItem.querySelectorAll('.submenu-item');
+    submenuItems.forEach(item => {
+        item.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            // Clear the timeout when a submenu item is selected
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+            }
+            programsMenuItem.classList.remove('touch-active');
+            startBtn.classList.remove('active');
+            startMenu.classList.remove('active');
+        });
+    });
+}
+
+// Handle Warrior Defense button click
+const warriorDefenseButton = document.querySelector('.warrior-defense-button');
+if (warriorDefenseButton) {
+    warriorDefenseButton.addEventListener('click', () => {
+        window.open('https://wearewarriorsjepjorz.netlify.app/?fbclid=IwZXh0bgNhZW0CMTEAAR4gNypYUag5lssml_Aby8EXRe7Dd4EDss2TTBxfNN3yaviDlqxyH2oQsoCfsg_aem_R3SHFor0uiPrsImigQ5Rmw', '_blank');
+        
+        // Close the menus
+        startBtn.classList.remove('active');
+        startMenu.classList.remove('active');
+        
+        const programsMenuItem = document.getElementById('programs-menu-item');
+        if (programsMenuItem) {
+            programsMenuItem.classList.remove('touch-active');
+        }
+    });
 } 
