@@ -579,8 +579,14 @@ document.addEventListener('touchstart', (e) => {
 
 // Handle Shut Down
 shutDownBtn.addEventListener('click', async () => {
+    // Check if dialog already exists
+    if (document.querySelector('#shutdown-dialog')) {
+        return; // Exit if dialog is already open
+    }
+
     // Create shutdown dialog
     const dialog = document.createElement('div');
+    dialog.id = 'shutdown-dialog';
     dialog.style.cssText = `
         position: fixed;
         top: 50%;
@@ -605,9 +611,16 @@ shutDownBtn.addEventListener('click', async () => {
     `;
     document.body.appendChild(dialog);
 
+    // Function to remove dialog and clean up
+    const removeDialog = () => {
+        if (dialog && dialog.parentNode) {
+            dialog.remove();
+        }
+    };
+
     // Add button handlers
     document.getElementById('confirm-shutdown').addEventListener('click', async () => {
-        dialog.remove();
+        removeDialog();
         startBtn.classList.remove('active');
         startMenu.classList.remove('active');
         
@@ -664,12 +677,26 @@ shutDownBtn.addEventListener('click', async () => {
         // Switch back to landing page
         switchToScreen('landing');
 
-        // Add this inside the confirm-shutdown click handler before switching screens
+        // Clear taskbar tabs
         taskbarTabs.innerHTML = '';
     });
 
-    document.getElementById('cancel-shutdown').addEventListener('click', () => {
-        dialog.remove();
+    document.getElementById('cancel-shutdown').addEventListener('click', removeDialog);
+
+    // Add click outside to cancel
+    document.addEventListener('mousedown', function handleClickOutside(e) {
+        if (dialog && !dialog.contains(e.target)) {
+            removeDialog();
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+    });
+
+    // Add escape key to cancel
+    document.addEventListener('keydown', function handleEscape(e) {
+        if (e.key === 'Escape') {
+            removeDialog();
+            document.removeEventListener('keydown', handleEscape);
+        }
     });
 });
 
