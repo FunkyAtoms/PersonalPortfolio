@@ -8,7 +8,7 @@ const screens = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
     
     // Force all windows to be hidden on startup and reset their state
     document.querySelectorAll('.window').forEach(window => {
@@ -18,11 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset position for mobile
         if (isMobile) {
-            window.style.transform = 'translate(-50%, -50%)';
-            window.style.top = '50%';
-            window.style.left = '50%';
-            window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
-            window.style.height = '80vh';
+            centerWindow(window);
         }
     });
 
@@ -55,10 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.style.display = 'flex';
                 
                 if (isMobile) {
-                    // Ensure proper positioning on mobile
-                    window.style.transform = 'translate(-50%, -50%)';
-                    window.style.top = '50%';
-                    window.style.left = '50%';
+                    centerWindow(window);
                 }
                 
                 // Create or update taskbar tab
@@ -84,17 +77,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Handle orientation change on mobile
+    // Handle orientation change and resize on mobile
     if (isMobile) {
         window.addEventListener('orientationchange', () => {
             document.querySelectorAll('.window').forEach(window => {
-                if (!window.hidden) {
-                    // Recenter window
-                    window.style.transform = 'translate(-50%, -50%)';
-                    window.style.top = '50%';
-                    window.style.left = '50%';
-                    window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
-                    window.style.height = '80vh';
+                if (!window.hidden && window.style.display !== 'none') {
+                    centerWindow(window);
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.window').forEach(window => {
+                if (!window.hidden && window.style.display !== 'none') {
+                    centerWindow(window);
                 }
             });
         });
@@ -380,12 +376,22 @@ function createTaskbarTab(windowId, title, iconSrc) {
     tab.addEventListener('click', () => {
         const window = document.getElementById(windowId);
         const isHidden = window.hidden || window.style.display === 'none';
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
         
         if (isHidden) {
             // Show window
             window.hidden = false;
             window.style.display = 'flex';
             tab.classList.add('active');
+            
+            // Reset position for mobile/small screens
+            if (isMobile) {
+                window.style.transform = 'translate(-50%, -50%)';
+                window.style.left = '50%';
+                window.style.top = '50%';
+                window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
+                window.style.height = window.innerHeight <= 600 ? '70vh' : '80vh';
+            }
             
             // Bring window to front
             const highestZ = Math.max(...Array.from(document.querySelectorAll('.window'))
@@ -725,4 +731,16 @@ rainbowToggle.addEventListener('change', () => {
     
     // Save the setting to localStorage
     localStorage.setItem('rainbowBorders', rainbowToggle.checked);
-}); 
+});
+
+// Add a function to center window
+function centerWindow(window) {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    if (isMobile) {
+        window.style.transform = 'translate(-50%, -50%)';
+        window.style.left = '50%';
+        window.style.top = '50%';
+        window.style.width = window.innerWidth > 480 ? '95vw' : '98vw';
+        window.style.height = window.innerHeight <= 600 ? '70vh' : '80vh';
+    }
+} 
