@@ -43,6 +43,8 @@ body {
     justify-content: center;
     align-items: center;
     position: relative;
+    flex-direction: column;
+    gap: 20px;
 }
 
 #whats-this-btn {
@@ -55,12 +57,11 @@ body {
     border-bottom-color: #000;
     color: #000;
     font-weight: bold;
+    z-index: 2;
 }
 
 #skip-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
+    position: relative;
     padding: 8px 15px;
     font-size: 12px;
     cursor: pointer;
@@ -69,6 +70,7 @@ body {
     border-right-color: #000;
     border-bottom-color: #000;
     color: #000;
+    z-index: 2;
 }
 
 #skip-btn:hover {
@@ -760,14 +762,29 @@ body {
     }
 
     /* Landing page */
+    #landing-page {
+        padding: 20px;
+    }
+
     #whats-this-btn {
         padding: 20px 40px;
         font-size: 16px;
+        width: 80%;
+        max-width: 300px;
     }
 
     #skip-btn {
-        padding: 12px 20px;
+        padding: 15px 30px;
         font-size: 14px;
+        width: 60%;
+        max-width: 200px;
+    }
+
+    #whats-this-btn:active,
+    #skip-btn:active {
+        border: 2px solid #000;
+        border-right-color: #dfdfdf;
+        border-bottom-color: #dfdfdf;
     }
 
     /* Desktop icons */
@@ -796,6 +813,12 @@ body {
         left: 5% !important;
         transform: none !important;
         position: fixed;
+        transition: transform 0.1s ease;
+        touch-action: none; /* Prevent browser handling of touch events */
+    }
+
+    .window.dragging {
+        transition: none;
     }
 
     .window-content {
@@ -822,6 +845,48 @@ body {
         min-width: 120px;
         padding: 0 12px;
         font-size: 12px;
+        touch-action: none;
+        transition: transform 0.1s ease;
+    }
+
+    .taskbar-tab.dragging {
+        opacity: 0.8;
+        background: #d4d4d4;
+        position: relative;
+        z-index: 1000;
+        transform: scale(1.02);
+    }
+
+    /* Active states for touch */
+    .window-header:active,
+    .taskbar-tab:active,
+    .start-menu-item:active {
+        background-color: #000080;
+        color: #fff;
+    }
+
+    .window-header:active .close-btn,
+    .window-header:active .minimize-btn {
+        border: 2px solid #000;
+        border-right-color: #dfdfdf;
+        border-bottom-color: #dfdfdf;
+    }
+
+    /* Prevent text selection during touch */
+    .window-header,
+    .taskbar-tab,
+    .start-menu-item {
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    /* Smoother scrolling */
+    .window-content,
+    .taskbar-tabs {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
     }
 
     /* Start menu */
@@ -896,6 +961,11 @@ body {
         -webkit-touch-callout: none;
         user-select: none;
     }
+
+    .landing-buttons {
+        gap: 30px;
+        padding: 40px 20px;
+    }
 }
 
 /* Additional adjustments for very small screens */
@@ -922,4 +992,14 @@ body {
         height: 70% !important;
         top: 5% !important;
     }
+}
+
+.landing-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
 } 

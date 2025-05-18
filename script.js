@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateClock();
     setInterval(updateClock, 1000);
     setupWindowDragging();
+    setupTaskbarDragging();
     
     // Load rainbow border setting
     const rainbowSetting = localStorage.getItem('rainbowBorders');
@@ -95,52 +96,78 @@ function setupWindowDragging() {
         let xOffset = 0;
         let yOffset = 0;
 
-        // Set initial position and size
-        if (!win.style.transform) {
+        // Set initial position and size for desktop
+        if (!win.style.transform && window.innerWidth > 768) {
             win.style.transform = 'translate3d(50px, 50px, 0)';
             win.style.width = '400px';
             win.style.height = '300px';
         }
 
-        // Mouse Events
-        header.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        // Touch Events
-        header.addEventListener('touchstart', touchDragStart);
-        document.addEventListener('touchmove', touchDrag);
-        document.addEventListener('touchend', dragEnd);
-
-        function touchDragStart(e) {
+        function handleTouchStart(e) {
             const touch = e.touches[0];
+            const rect = win.getBoundingClientRect();
+            
+            // Get the current position from transform or use current position
+            const transform = win.style.transform.match(/translate3d\((-?\d+)px,\s*(-?\d+)px/);
+            xOffset = transform ? parseInt(transform[1]) : rect.left;
+            yOffset = transform ? parseInt(transform[2]) : rect.top;
+            
             initialX = touch.clientX - xOffset;
             initialY = touch.clientY - yOffset;
 
-            if (e.target === header || e.target.parentElement === header) {
+            if (e.target.closest('.window-header')) {
                 isDragging = true;
+                win.style.transition = 'none';
             }
         }
 
-        function touchDrag(e) {
-            if (isDragging) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                currentX = touch.clientX - initialX;
-                currentY = touch.clientY - initialY;
+        function handleTouchMove(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            currentX = touch.clientX - initialX;
+            currentY = touch.clientY - initialY;
 
-                xOffset = currentX;
-                yOffset = currentY;
-
-                setTranslate(currentX, currentY, win);
-            }
+            setTranslate(currentX, currentY, win);
         }
+
+        function handleTouchEnd() {
+            isDragging = false;
+            win.style.transition = '';
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            // Ensure window stays within viewport bounds
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const rect = el.getBoundingClientRect();
+
+            // Constrain X position
+            xPos = Math.max(0, Math.min(xPos, windowWidth - rect.width));
+            
+            // Constrain Y position (account for taskbar)
+            yPos = Math.max(0, Math.min(yPos, windowHeight - rect.height - 50));
+
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+
+        // Add touch events
+        header.addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+
+        // Keep mouse events for desktop
+        header.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
 
         function dragStart(e) {
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
 
-            if (e.target === header || e.target.parentElement === header) {
+            if (e.target.closest('.window-header')) {
                 isDragging = true;
             }
         }
@@ -158,30 +185,13 @@ function setupWindowDragging() {
             }
         }
 
-        function setTranslate(xPos, yPos, el) {
-            // Ensure window stays within viewport bounds
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const rect = el.getBoundingClientRect();
-
-            // Constrain X position
-            if (xPos < 0) xPos = 0;
-            if (xPos + rect.width > windowWidth) xPos = windowWidth - rect.width;
-
-            // Constrain Y position
-            if (yPos < 0) yPos = 0;
-            if (yPos + rect.height > windowHeight - 50) yPos = windowHeight - rect.height - 50;
-
-            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
-        }
-
         function dragEnd() {
             isDragging = false;
         }
 
-        // Handle window focus for both mouse and touch
-        win.addEventListener('mousedown', focusWindow);
+        // Handle window focus
         win.addEventListener('touchstart', focusWindow);
+        win.addEventListener('mousedown', focusWindow);
 
         function focusWindow() {
             document.querySelectorAll('.window').forEach(w => {
@@ -189,6 +199,63 @@ function setupWindowDragging() {
             });
             win.style.zIndex = '2';
         }
+    });
+}
+
+// Taskbar tab drag and drop for touch devices
+function setupTaskbarDragging() {
+    const tabs = document.querySelectorAll('.taskbar-tab');
+    let draggedTab = null;
+    let initialX = 0;
+    let currentX = 0;
+
+    tabs.forEach(tab => {
+        let startX = 0;
+        let isDragging = false;
+
+        tab.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            draggedTab = tab;
+            startX = e.touches[0].clientX;
+            initialX = tab.offsetLeft;
+            
+            tab.style.transition = 'none';
+            tab.classList.add('dragging');
+        }, { passive: true });
+
+        tab.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            
+            currentX = e.touches[0].clientX - startX;
+            const newPosition = initialX + currentX;
+            
+            // Find the center point of the dragged tab
+            const draggedCenter = newPosition + (tab.offsetWidth / 2);
+            
+            // Check other tabs for repositioning
+            tabs.forEach(otherTab => {
+                if (otherTab !== draggedTab) {
+                    const otherCenter = otherTab.offsetLeft + (otherTab.offsetWidth / 2);
+                    if (Math.abs(draggedCenter - otherCenter) < otherTab.offsetWidth / 2) {
+                        if (draggedCenter < otherCenter) {
+                            taskbarTabs.insertBefore(draggedTab, otherTab);
+                        } else {
+                            taskbarTabs.insertBefore(draggedTab, otherTab.nextSibling);
+                        }
+                    }
+                }
+            });
+        }, { passive: true });
+
+        tab.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            draggedTab.style.transform = '';
+            draggedTab.style.transition = '';
+            draggedTab.classList.remove('dragging');
+            draggedTab = null;
+        });
     });
 }
 
