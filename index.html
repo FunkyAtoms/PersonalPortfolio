@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio By Ram</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Initial landing page -->
+    <div id="landing-page" class="screen active">
+        <button id="whats-this-btn">What's this?</button>
+        <button id="skip-btn">Skip Intro</button>
+    </div>
+
+    <!-- Loading screen -->
+    <div id="loading-screen" class="screen">
+        <div class="loading-bar-container">
+            <div id="loading-bar"></div>
+            <div id="loading-text">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Windows 95 startup screen -->
+    <div id="startup-screen" class="screen">
+        <div class="win95-startup">
+            <div class="win95-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Windows_Logo_%281992-2001%29.svg" alt="Windows 95 Logo">
+            </div>
+            <div class="startup-text">
+                Starting Windows 95...
+            </div>
+        </div>
+    </div>
+
+    <!-- Main portfolio desktop -->
+    <div id="desktop-screen" class="screen">
+        <div class="taskbar">
+            <button id="start-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Windows_Logo_%281992-2001%29.svg" alt="Start">
+                Start
+            </button>
+            <div class="taskbar-tabs"></div>
+            <div class="time"></div>
+        </div>
+
+        <div class="start-menu">
+            <div class="start-menu-header">
+                Windows 95
+            </div>
+            <div class="start-menu-items">
+                <div class="start-menu-item">
+                    <img src="img/programs.png" alt="Programs">
+                    Programs
+                </div>
+                <div class="start-menu-item">
+                    <img src="img/documents.png" alt="Documents">
+                    Documents
+                </div>
+                <div class="start-menu-item">
+                    <img src="img/settings.png" alt="Settings">
+                    Settings
+                </div>
+                <div class="start-menu-divider"></div>
+                <div class="start-menu-item" id="shut-down-btn">
+                    <img src="img/shutdown.png" alt="Shut Down">
+                    Shut Down...
+                </div>
+            </div>
+        </div>
+
+        <div class="desktop-icons">
+            <div class="icon" data-window="about">
+                <img src="img/desktop.png" alt="About Me">
+                <span>About Me</span>
+            </div>
+            <div class="icon" data-window="projects">
+                <img src="img/projects.png" alt="Projects">
+                <span>Projects</span>
+            </div>
+            <div class="icon" data-window="contact">
+                <img src="img/contacts.png" alt="Contact">
+                <span>Contact</span>
+            </div>
+        </div>
+
+        <!-- Windows -->
+        <div id="about-window" class="window" hidden>
+            <div class="window-header">
+                <span>About Me</span>
+                <div class="window-controls">
+                    <button class="minimize-btn">_</button>
+                    <button class="close-btn">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>Personal Information</h2>
+                <p><strong>Name:</strong> Ram Jay</p>
+                
+                <p><strong>Education:</strong> Xavier University Ateneo de Cagayan - Bachelor of Science in Information Technology</p>
+
+                <h3>Things I like:</h3>
+                <ul>
+                    <li>Blueberry Cheesecake</li>
+                    <li>Squid</li>
+                    <li>Chinkeetea</li>
+                    <li>Meeting Friends</li>
+                    <li>Matulog</li>
+                    <li>Blueberry Cheesecake (Again)</li>
+                    <li>Specific person? Crush guro?</li>
+                    <li>Pianoooooo</li>
+                </ul>
+
+                <hr>
+
+                <h2>Programming Skills</h2>
+                <dl>
+                    <dt>Java:</dt>
+                    <li>Well, I can do Java, but I'm not that good at it but most of the time i do <a href="https://www.planetminecraft.com/member/funky_atoms/" target="_blank">Datapacks</a> in Minecraft!</li>
+                    
+                    <dt>C++:</dt>
+                    <li>I had experience with it, but that was some time ago</li>
+                    
+                    <dt>Python:</dt>
+                    <li>I used to learn Python when I was in Engineering, thankfully I would start to learn more about Python again soon!</li>
+                    
+                    <dt>HTML and CSS:</dt>
+                    <li>Well, I'm learning it now, and I'm having fun with it, I think</li>
+
+                    <dt>SQL:</dt>
+                    <li>suffering from it</li>
+                </dl>
+            </div>
+        </div>
+
+        <div id="projects-window" class="window" hidden>
+            <div class="window-header">
+                <span>My Projects</span>
+                <div class="window-controls">
+                    <button class="minimize-btn">_</button>
+                    <button class="close-btn">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>My Portfolio Projects</h2>
+                <ul class="project-list">
+                    <li>
+                        <a href="https://funkyatoms.github.io/Personal-Website/MyWebsiteByMin" target="_blank">
+                            <div class="project-title">Personal Website</div>
+                            <div class="project-desc">My first personal website with a simple and clean design</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://funkyatoms.github.io/My-Google-Clone/GoogleClones" target="_blank">
+                            <div class="project-title">Google Clone</div>
+                            <div class="project-desc">A replica of the Google search interface</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://funkyatoms.github.io/SpaceExplorers/Explorers.html" target="_blank">
+                            <div class="project-title">Space Exploration Website</div>
+                            <div class="project-desc">An interactive space exploration themed website</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://funkyatoms.github.io/BdayCard/index.html" target="_blank">
+                            <div class="project-title">Birthday Site</div>
+                            <div class="project-desc">A creative birthday celebration webpage</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://funkyatoms.github.io/project-1/" target="_blank">
+                            <div class="project-title">Project - 1</div>
+                            <div class="project-desc">Responsive design experiment</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://funkyatoms.github.io/project-2/" target="_blank">
+                            <div class="project-title">Project - 2</div>
+                            <div class="project-desc">Personal portfolio exploration</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/FunkyAtoms/LoginOutActivity" target="_blank">
+                            <div class="project-title">Fullstack Login</div>
+                            <div class="project-desc">A complete login/logout system with PHP and MySQL</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="contact-window" class="window" hidden>
+            <div class="window-header">
+                <span>Contact</span>
+                <div class="window-controls">
+                    <button class="minimize-btn">_</button>
+                    <button class="close-btn">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>Contact Information</h2>
+                <dl class="contact-list">
+                    <dt>Email:</dt>
+                    <dd><a href="mailto:rjbpo04sept2004@gmail.com">rjbpo04sept2004@gmail.com</a></dd>
+
+                    <dt>School Email:</dt>
+                    <dd><a href="mailto:20140004282@my.xu.edu.ph">20140004282@my.xu.edu.ph</a></dd>
+
+                    <dt>Github Account:</dt>
+                    <dd><a href="https://github.com/FunkyAtoms" target="_blank">@FunkyAtoms</a></dd>
+
+                    <dt>Discord:</dt>
+                    <dd>Minimco</dd>
+
+                    <dt>Phone number:</dt>
+                    <dd>No</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div id="settings-window" class="window" hidden>
+            <div class="window-header">
+                <span>Settings</span>
+                <div class="window-controls">
+                    <button class="minimize-btn">_</button>
+                    <button class="close-btn">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>Window Settings</h2>
+                <div class="settings-option">
+                    <label class="win95-checkbox">
+                        <input type="checkbox" id="rainbow-outline-toggle">
+                        <span class="checkmark"></span>
+                        Enable Rainbow Window Borders
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
