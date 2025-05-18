@@ -379,20 +379,24 @@ function createTaskbarTab(windowId, title, iconSrc) {
     
     tab.addEventListener('click', () => {
         const window = document.getElementById(windowId);
-        if (window.hidden) {
+        const isHidden = window.hidden || window.style.display === 'none';
+        
+        if (isHidden) {
+            // Show window
             window.hidden = false;
+            window.style.display = 'flex';
             tab.classList.add('active');
+            
+            // Bring window to front
+            const highestZ = Math.max(...Array.from(document.querySelectorAll('.window'))
+                .map(w => parseInt(w.style.zIndex) || 1));
+            window.style.zIndex = String(highestZ + 1);
         } else {
-            // If window is already visible, minimize it
+            // Hide window
             window.hidden = true;
+            window.style.display = 'none';
             tab.classList.remove('active');
         }
-        
-        // Bring window to front
-        document.querySelectorAll('.window').forEach(w => {
-            w.style.zIndex = '1';
-        });
-        window.style.zIndex = '2';
     });
     
     return tab;
