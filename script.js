@@ -102,9 +102,39 @@ function setupWindowDragging() {
             win.style.height = '300px';
         }
 
+        // Mouse Events
         header.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
+
+        // Touch Events
+        header.addEventListener('touchstart', touchDragStart);
+        document.addEventListener('touchmove', touchDrag);
+        document.addEventListener('touchend', dragEnd);
+
+        function touchDragStart(e) {
+            const touch = e.touches[0];
+            initialX = touch.clientX - xOffset;
+            initialY = touch.clientY - yOffset;
+
+            if (e.target === header || e.target.parentElement === header) {
+                isDragging = true;
+            }
+        }
+
+        function touchDrag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                currentX = touch.clientX - initialX;
+                currentY = touch.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, win);
+            }
+        }
 
         function dragStart(e) {
             initialX = e.clientX - xOffset;
@@ -129,6 +159,19 @@ function setupWindowDragging() {
         }
 
         function setTranslate(xPos, yPos, el) {
+            // Ensure window stays within viewport bounds
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const rect = el.getBoundingClientRect();
+
+            // Constrain X position
+            if (xPos < 0) xPos = 0;
+            if (xPos + rect.width > windowWidth) xPos = windowWidth - rect.width;
+
+            // Constrain Y position
+            if (yPos < 0) yPos = 0;
+            if (yPos + rect.height > windowHeight - 50) yPos = windowHeight - rect.height - 50;
+
             el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
         }
 
@@ -136,13 +179,16 @@ function setupWindowDragging() {
             isDragging = false;
         }
 
-        // Handle window focus
-        win.addEventListener('mousedown', () => {
+        // Handle window focus for both mouse and touch
+        win.addEventListener('mousedown', focusWindow);
+        win.addEventListener('touchstart', focusWindow);
+
+        function focusWindow() {
             document.querySelectorAll('.window').forEach(w => {
                 w.style.zIndex = '1';
             });
             win.style.zIndex = '2';
-        });
+        }
     });
 }
 
@@ -368,8 +414,8 @@ startBtn.addEventListener('click', () => {
     startMenu.classList.toggle('active');
 });
 
-// Close Start menu when clicking outside
-document.addEventListener('click', (e) => {
+// Close Start menu when touching outside
+document.addEventListener('touchstart', (e) => {
     if (!startBtn.contains(e.target) && !startMenu.contains(e.target)) {
         startBtn.classList.remove('active');
         startMenu.classList.remove('active');
