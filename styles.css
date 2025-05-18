@@ -601,11 +601,21 @@ body {
     padding: 6px 8px;
     cursor: pointer;
     color: #000;
+    position: relative;
+}
+
+.start-menu-item .arrow {
+    margin-left: auto;
+    font-size: 10px;
 }
 
 .start-menu-item:hover {
     background: #000080;
     color: #fff;
+}
+
+.start-menu-item:hover .submenu {
+    display: block;
 }
 
 .start-menu-item img {
@@ -703,4 +713,41 @@ body {
     border-left: 2px solid;
     border-top: 2px solid;
     border-right: 2px solid;
+}
+
+.submenu {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: #c0c0c0;
+    border: 2px solid #dfdfdf;
+    border-right-color: #000;
+    border-bottom-color: #000;
+    display: none;
+    min-width: 180px;
+}
+
+.submenu-item {
+    padding: 4px 8px;
+}
+
+.submenu-item:hover {
+    background: #000080;
+}
+
+.submenu-item:hover a {
+    color: #fff;
+}
+
+.submenu-item a {
+    color: #000;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.submenu-item img {
+    width: 16px;
+    height: 16px;
 } 
